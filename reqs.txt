@@ -1,0 +1,2 @@
+python-memcached==1.58
+tornado==4.4.2
