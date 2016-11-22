@@ -83,9 +83,9 @@ class ApplicationTestCase(AsyncHTTPTestCase):
     def test_handle_response(self):
         """проверяем, что ошибки обрабатываются должным образом"""
         r = Index.handle_errors(HTTPError(httplib.INTERNAL_SERVER_ERROR))
-        self.assertDictEqual(r, dict(status='ERROR', error=ERRORS['decode']))
+        self.assertDictEqual(r, dict(status=STATUSES['error'], error=ERRORS['decode']))
         r = Index.handle_errors(HTTPError(httplib.SEE_OTHER))
-        self.assertDictEqual(r, dict(status='ERROR', error=ERRORS['timeout']))
+        self.assertDictEqual(r, dict(status=STATUSES['error'], error=ERRORS['timeout']))
 
 
 if __name__ == '__main__':

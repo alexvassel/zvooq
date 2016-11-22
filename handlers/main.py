@@ -60,4 +60,4 @@ class Index(RequestHandler):
     @staticmethod
     def handle_errors(e):
         msg = ERRORS['decode'] if e.code == httplib.INTERNAL_SERVER_ERROR else ERRORS['timeout']
-        return dict(status='ERROR', error=msg)
+        return dict(status=STATUSES['error'], error=msg)
