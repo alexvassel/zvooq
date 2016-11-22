@@ -41,8 +41,7 @@ class Index(RequestHandler):
         try:
             response = yield self.fetch(url)
         except HTTPError as e:
-            msg = ERRORS['decode'] if e.code == httplib.INTERNAL_SERVER_ERROR else ERRORS['timeout']
-            self.finish(dict(status='ERROR', error=msg))
+            self.finish(self.handle_errors(e))
             return
         finally:
             self.application.cache.delete(self.status_key)
@@ -57,3 +56,8 @@ class Index(RequestHandler):
         request = HTTPRequest(url, request_timeout=REQUEST_TIMEOUT)
         response = yield AsyncHTTPClient().fetch(request)
         raise tornado.gen.Return(response.body)
+
+    @staticmethod
+    def handle_errors(e):
+        msg = ERRORS['decode'] if e.code == httplib.INTERNAL_SERVER_ERROR else ERRORS['timeout']
+        return dict(status='ERROR', error=msg)
