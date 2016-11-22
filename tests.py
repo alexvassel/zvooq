@@ -12,7 +12,7 @@ from tornado.testing import AsyncHTTPTestCase
 
 from app import application
 from handlers.main import Index
-from helpers import STATUSES, TTL, ERRORS
+from helpers import STATUSES, TTL, ERRORS, BASE_URL
 
 
 class ApplicationTestCase(AsyncHTTPTestCase):
@@ -70,6 +70,7 @@ class ApplicationTestCase(AsyncHTTPTestCase):
 
         response = (self.fetch(self.get_app().reverse_url('index') + '?{}={}'.
                                format(self.TEST_PARAM['good_name'], self.TEST_PARAM['value'])))
+        fetch.assert_called_once_with(BASE_URL.format(self.TEST_PARAM['value']))
         self.assertEqual(response.code, httplib.OK)
         self.assertEquals(cache.get.call_count, 2)
         self.assertListEqual(cache.get.mock_calls, ([mock.call(self.TEST_PARAM['value'] +
