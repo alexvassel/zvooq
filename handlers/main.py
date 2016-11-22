@@ -30,7 +30,7 @@ class Index(RequestHandler):
 
         # Если значение по ключу есть в кэше, то отдаем его и выходим
         if key_value is not None:
-            self.finish(dict(status='OK', value=key_value))
+            self.finish(dict(status=STATUSES['ok'], value=key_value))
             return
 
         # Если значение пока никто не получает, то отмечаемся, в том, что ушли получать значение
@@ -49,7 +49,7 @@ class Index(RequestHandler):
         response = json_decode(response)
 
         self.application.cache.set(self.key, response['hash'], TTL['key'])
-        self.finish(dict(status='OK', value=response['hash']))
+        self.finish(dict(status=STATUSES['ok'], value=response['hash']))
 
     @tornado.gen.coroutine
     def fetch(self, url):

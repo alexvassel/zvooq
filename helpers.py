@@ -11,7 +11,7 @@ REQUEST_TIMEOUT = 5
 TTL = dict(key=9, status=6)
 
 # Означает, что поток начал обращение к BASE_URL за ответом
-STATUSES = dict(pending='PENDING', error='ERROR')
+STATUSES = dict(pending='PENDING', error='ERROR', ok='OK')
 
 # Ошибки таймаута и получение хэша по ключу
 ERRORS = dict(timeout='timeout error', decode='json decode error')

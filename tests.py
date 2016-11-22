@@ -39,21 +39,24 @@ class ApplicationTestCase(AsyncHTTPTestCase):
         self.assertDictEqual(json_decode(response.body), {'status': STATUSES['pending']})
         cache.get.assert_called_once_with(self.TEST_PARAM['value'] + '_status')
         fetch.assert_not_called()
+        self.assertDictEqual(json.loads(response.body), dict(status=STATUSES['pending']))
 
     @mock.patch('handlers.main.Index.fetch')
     @mock.patch('app.application.cache')
     def test_key_cache_exists(self, cache, fetch):
         """проверяем, что если в кэше уже дежит хэш, мы не делаем запрос на удаленный сервис"""
-        cache.get.side_effect = (None, self.TEST_PARAM['value'])
+        cache.get.side_effect = (None, self.TEST_PARAM['hash'])
         response = (self.fetch(self.get_app().reverse_url('index') + '?{}={}'.
                                format(self.TEST_PARAM['good_name'], self.TEST_PARAM['value'])))
         self.assertDictEqual(json_decode(response.body), {'status': 'OK',
-                                                          'value': self.TEST_PARAM['value']})
+                                                          'value': self.TEST_PARAM['hash']})
         self.assertEquals(cache.get.call_count, 2)
         self.assertListEqual(cache.get.mock_calls, ([mock.call(self.TEST_PARAM['value'] +
                                                      '_status'),
                                                      mock.call(self.TEST_PARAM['value'])]))
         fetch.assert_not_called()
+        self.assertDictEqual(json.loads(response.body), dict(status=STATUSES['ok'],
+                                                             value=self.TEST_PARAM['hash']))
 
     @mock.patch('handlers.main.Index.fetch')
     @mock.patch('app.application.cache')
@@ -79,6 +82,8 @@ class ApplicationTestCase(AsyncHTTPTestCase):
                                                      mock.call(self.TEST_PARAM['value'],
                                                                self.TEST_PARAM['hash'],
                                                                TTL['key'])]))
+        self.assertDictEqual(json.loads(response.body), dict(status=STATUSES['ok'],
+                                                             value=self.TEST_PARAM['hash']))
 
     def test_handle_response(self):
         """проверяем, что ошибки обрабатываются должным образом"""
