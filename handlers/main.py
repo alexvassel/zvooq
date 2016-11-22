@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+
+import httplib
+
 from tornado.escape import json_decode
-from tornado.httpclient import HTTPRequest, AsyncHTTPClient
-from tornado.web import RequestHandler, asynchronous
+import tornado.gen
+from tornado.httpclient import HTTPRequest, AsyncHTTPClient, HTTPError
+from tornado.web import RequestHandler
 
 from helpers import BASE_URL, REQUEST_TIMEOUT, STATUSES, TTL, ERRORS
 
@@ -10,7 +14,7 @@ class Index(RequestHandler):
     key = None
     status_key = None
 
-    @asynchronous
+    @tornado.gen.coroutine
     def get(self):
         self.key = self.get_argument('key')
         self.status_key = self.key + '_status'
@@ -30,27 +34,26 @@ class Index(RequestHandler):
             return
 
         # Если значение пока никто не получает, то отмечаемся, в том, что ушли получать значение
-        if status is None:
-            self.application.cache.set(self.status_key, STATUSES['pending'], TTL['status'])
+        self.application.cache.set(self.status_key, STATUSES['pending'], TTL['status'])
 
         url = BASE_URL.format(self.key)
 
-        request = HTTPRequest(url, request_timeout=REQUEST_TIMEOUT)
-        AsyncHTTPClient().fetch(request, callback=self.on_response)
-
-    def on_response(self, response):
         try:
-            response = json_decode(response.body)
-            # Записываем в кэш значение, полученное от сервера
-            self.application.cache.set(self.key, response['hash'], TTL['key'])
-            r = dict(status='OK', value=response['hash'])
-        except ValueError:
-            r = dict(status='ERROR', error=ERRORS['decode'])
-        except TypeError:
-            r = dict(status='ERROR', error=ERRORS['timeout'])
+            response = yield self.fetch(url)
+        except HTTPError as e:
+            msg = ERRORS['decode'] if e.code == httplib.INTERNAL_SERVER_ERROR else ERRORS['timeout']
+            self.finish(dict(status='ERROR', error=msg))
+            return
+        finally:
+            self.application.cache.delete(self.status_key)
 
-        '''после ответа от сервера, или таймаута запроса, удаляем информацию о том,
-        что мы получали значение'''
-        self.application.cache.delete(self.status_key)
-        self.finish(r)
+        response = json_decode(response)
 
+        self.application.cache.set(self.key, response['hash'], TTL['key'])
+        self.finish(dict(status='OK', value=response['hash']))
+
+    @tornado.gen.coroutine
+    def fetch(self, url):
+        request = HTTPRequest(url, request_timeout=REQUEST_TIMEOUT)
+        response = yield AsyncHTTPClient().fetch(request)
+        raise tornado.gen.Return(response.body)
