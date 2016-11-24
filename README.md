@@ -11,4 +11,5 @@
 В ситстеме должен быть установлен memcached (для Ubuntu 14.04 - это пакет memcached) 
 
 * pip install -r reqs.txt (ставим зависимости)
+* python tests.py (запускаем тесты)
 * python run.py (запускаем приложение)
